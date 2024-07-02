@@ -7,6 +7,7 @@ app = Flask(__name__)
 # Configuration for file uploads
 UPLOAD_FOLDER = 'static/uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+NUM_FILES_UPLOADED = 0
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -19,6 +20,7 @@ def allowed_file(filename):
 
 @app.route('/', methods=['GET', 'POST'])
 def upload_file():
+    global NUM_FILES_UPLOADED
     if request.method == 'POST':
         # Check if the post request has the file part
         if 'file' not in request.files:
@@ -30,7 +32,11 @@ def upload_file():
             return redirect(request.url)
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
+            tmp = filename.split(".")
+            filename = f"{tmp[0]}_{NUM_FILES_UPLOADED}.{tmp[-1]}"
+            print(f"Saving file: {filename}")
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            NUM_FILES_UPLOADED += 1
             return redirect(url_for('uploaded_file', filename=filename))
     files = os.listdir(app.config['UPLOAD_FOLDER'])
     return render_template('index.html', files=files)
